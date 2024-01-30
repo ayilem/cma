@@ -1,5 +1,7 @@
 config = {
-    'mode': 'clustering',
+    # 'mode': 'clustering',
+    # 'mode' : 'conditional',
+    'mode': 'standard',
     'batch_size': 32,
     'epochs': 100,
     'lr': 1e-4,
@@ -31,5 +33,5 @@ config = {
     },
     'checkpoint_prefix': 'checkpoint',
     'saving_freq': None,
-    'device': 'cuda'
+    'device': 'cpu'
 }

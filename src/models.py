@@ -146,27 +146,32 @@ class Model:
 
     def __init__(self, config):
         self.config = config
-
         self.vae = list()
         self.d = None
         self.cond = None
         self.projector = None
         self.cluster = None
+        
 
     def set_model(self, n_classes=None):
         for settings in self.config['vae']:
-            v = VAE(n_input=settings['n_inputs'], n_hidden=settings['n_hidden'], latent_dims=self.config['latent_dims']).to(self.config['device'])
+            # v = VAE(n_input=settings['n_inputs'], n_hidden=settings['n_hidden'], latent_dims=self.config['latent_dims']).to(self.config['device'])
+            v = VAE(n_input=settings['n_inputs'], n_hidden=settings['n_hidden'], latent_dims=self.config['latent_dims']).to(torch.device('cpu'))
             self.vae.append(v)
 
-        self.d = Discriminator(nz=self.config['latent_dims'], n_hidden=self.config['discriminator']['n_hidden'], n_out=len(self.vae)).to(self.config['device'])
+        self.d = Discriminator(nz=self.config['latent_dims'], n_hidden=self.config['discriminator']['n_hidden'], n_out=len(self.vae)).to(torch.device('cpu'))
+        # self.d = Discriminator(nz=self.config['latent_dims'], n_hidden=self.config['discriminator']['n_hidden'], n_out=len(self.vae)).to(self.config['device']) 
 
         if self.config['mode'] == 'conditional' or self.config['mode'] == 'clustering':
             assert n_classes != None, "The number of classes must be defined" 
-            self.cond = CondClassifier(nz=self.config['latent_dims'], n_out=n_classes).to(self.config['device'])
+            self.cond = CondClassifier(nz=self.config['latent_dims'], n_out=n_classes).to(torch.device('cpu'))
+            # self.cond = CondClassifier(nz=self.config['latent_dims'], n_out=n_classes).to(self.config['device'])
 
         if self.config['mode'] == 'clustering':
-            self.projector = Projector(latents=self.config['latent_dims'], n_out=self.config['clustering_module']['n_hidden']).to(self.config['device'])
-            self.cluster = Cluster(n_in=self.config['clustering_module']['n_hidden'], n_clusters=n_classes).to(self.config['device'])
+            self.projector = Projector(latents=self.config['latent_dims'], n_out=self.config['clustering_module']['n_hidden']).to(torch.device('cpu'))
+            self.cluster = Cluster(n_in=self.config['clustering_module']['n_hidden'], n_clusters=n_classes).to(torch.device('cpu'))
+            # self.projector = Projector(latents=self.config['latent_dims'], n_out=self.config['clustering_module']['n_hidden']).to(self.config['device'])
+            # self.cluster = Cluster(n_in=self.config['clustering_module']['n_hidden'], n_clusters=n_classes).to(self.config['device'])
 
     def forward(self, multi_modal_data:list):
         if self.config['mode'] == 'conditional' or self.config['mode'] == 'clustering':
@@ -253,12 +258,15 @@ from src.functions import remap_confusion_matrix, score_vector
 
 class CMA:
 
-    def __init__(self, config=None) -> None:
+    def __init__(self, config=None) -> None :
         self.model = Model(config)
 
     def load(self, checkpoint_file:str, device):
-        checkpoint = torch.load(checkpoint_file, map_location=device)
-        checkpoint['device'] = device
+        checkpoint = torch.load(checkpoint_file, map_location=torch.device('cpu'))
+        checkpoint['device'] = torch.device('cpu')
+        # print(device.type)
+        # checkpoint = torch.load(checkpoint_file, map_location=device)
+        # checkpoint['device'] = device
         self.model.config = checkpoint['config']
 
         n_classes = None
@@ -294,7 +302,8 @@ class CMA:
                 self.model.cluster.eval()
                 for X, y in dataloader:
                     with torch.no_grad():
-                        vae_latents = vae_model.encoder(X.to(self.model.config['device']))
+                        # vae_latents = vae_model.encoder(X.to(self.model.config['device']))
+                        vae_latents = vae_model.encoder(X.to(torch.device('cpu')))
                         pred_clusters = torch.argmax(nn.functional.softmax(self.model.cluster(self.model.projector(vae_latents)), dim=1), axis=1)
                 
                     latents.append(vae_latents)

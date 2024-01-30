@@ -28,7 +28,6 @@ class Trainer:
         output_projector, output_cluster = self.model.forward_clustering_module(output_latents, train=True, apply_argmax=False)
 
         # Losses
-
         loss_recon = []
         for i in range(len(output_recon)):
             l = self.loss_fn['recon'](multi_modal_data[i][0], output_recon[i])
@@ -310,7 +309,8 @@ def parse_arguments():
     parser.add_argument('--checkpoint-prefix', action='store', help='prefix name for checkpoint file')
     #parser.add_argument('--resume', '-r', action='store_true', help='resume from checkpoint')
     parser.add_argument('--saving-freq', type=int, help='Save intermediate states of training every this many epochs')
-    parser.add_argument('--device', choices=['cuda', 'cpu'], help='If not specified cuda device is used if available')
+    # parser.add_argument('--device', choices=['cuda', 'cpu'], help='If not specified cuda device is used if available')
+    parser.add_argument('--device', choices=['cpu'], help='If not specified cuda device is used if available')
     
     return vars(parser.parse_args())
 
@@ -324,7 +324,8 @@ if __name__ == '__main__':
     args = parse_arguments()
 
     if args['device'] == None:
-        args['device'] = 'cuda' if torch.cuda.is_available() else 'cpu'
+        # args['device'] = 'cuda' if torch.cuda.is_available() else 'cpu'
+        args['device'] = 'cpu'
 
     # Override config with params
     for k in args:
