@@ -61,10 +61,15 @@ class Decoder(nn.Module):
 
 class VAE(nn.Module):
     
-    def __init__(self, n_input=131, n_hidden=5000, latent_dims=20):
+    # def __init__(self, n_input=131, n_hidden=5000, latent_dims=20):
+    def __init__(self, n_input=131, n_hidden=5000, latent_dims=10):
         super().__init__()
+        self.n_input = n_input
+        self.n_hidden= n_hidden
+        self.latent_dims = latent_dims
         self.encoder = Encoder(n_input, latent_dims, n_hidden)
         self.decoder = Decoder(n_input, latent_dims, n_hidden)
+        
 
     def forward(self, x):
         z = self.encoder(x)
@@ -145,9 +150,10 @@ class Cluster(nn.Module):
 
 class Model:
 
-    def __init__(self, config):
+    def __init__(self, config, vae):
         self.config = config
-        self.vae = list()
+        # self.vae = list()
+        self.vae = vae
         self.d = None
         self.cond = None
         self.projector = None
