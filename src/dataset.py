@@ -35,7 +35,12 @@ def get_paired_data(suffix):
 
     y_common = pd.read_csv(root_dir + '/paired/clusters_' + suffix + '.txt', sep='\t', index_col=0)
 
-    return (expr_X, y_common), (methyl_X, y_common), (protein_X, y_common)
+    expr = IntersimDataset(expr_X, y_common)[:]
+    methyl = IntersimDataset(methyl_X, y_common)[:]
+    protein = IntersimDataset(protein_X, y_common)[:]
+
+    return [expr, methyl, protein]
+    # return [[expr_X, y_common], [methyl_X, y_common], [protein_X, y_common]]
 
 
 def get_unpaired_data(suffix):
