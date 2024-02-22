@@ -7,10 +7,12 @@ vae_model_modality1 = VAE(n_input = 131, n_hidden = 256)  # Replace with the act
 vae_model_modality2 = VAE(n_input=367, n_hidden = 256)  # Replace with the actual VAE model for modality 2
 vae_model_modality3 = VAE(n_input=160, n_hidden = 256)  # Replace with the actual VAE model for modality 3
 
+path = '/Users/zelievernin/Documents/centrale_marseille/4A/S9/Projet 3A/cma'
+
 # Load the trained weights for the VAE models
-checkpoint_modality1 = torch.load('C:/Users/emend/3A_new/3A_new/Projet 3A/repo_final/cma/checkpoint/vae_0_epoch_50.pth', map_location=torch.device('cpu'))
-checkpoint_modality2 = torch.load('C:/Users/emend/3A_new/3A_new/Projet 3A/repo_final/cma/checkpoint/vae_1_epoch_50.pth', map_location=torch.device('cpu'))
-checkpoint_modality3 = torch.load('C:/Users/emend/3A_new/3A_new/Projet 3A/repo_final/cma/checkpoint/vae_2_epoch_50.pth', map_location=torch.device('cpu'))
+checkpoint_modality1 = torch.load(path + '/checkpoint/vae_0_epoch_50.pth', map_location=torch.device('cpu'))
+checkpoint_modality2 = torch.load(path + '/checkpoint/vae_1_epoch_50.pth', map_location=torch.device('cpu'))
+checkpoint_modality3 = torch.load(path + '/checkpoint/vae_2_epoch_50.pth', map_location=torch.device('cpu'))
 
 vae_model_modality1.load_state_dict(checkpoint_modality1)
 vae_model_modality2.load_state_dict(checkpoint_modality2)
@@ -27,7 +29,7 @@ torch.manual_seed(42)
 
 # Generate samples in modality 1
 # num_samples = 10
-num_samples = 50
+num_samples = 1000
 latent_dim_modality1 = vae_model_modality1.encoder.z_mean.out_features
 
 with torch.no_grad():
@@ -78,7 +80,7 @@ decoded_samples_modality3 = decoded_samples_modality3_1.numpy()
 
 # Generate samples in modality 2
 # num_samples = 10
-num_samples = 50
+num_samples = 1000
 latent_dim_modality2 = vae_model_modality2.encoder.z_mean.out_features
 
 with torch.no_grad():
@@ -127,7 +129,7 @@ decoded_samples_modality3 = decoded_samples_modality3_2.numpy()
 
 # Generate samples in modality 2
 # num_samples = 10
-num_samples = 50
+num_samples = 1000
 latent_dim_modality3 = vae_model_modality3.encoder.z_mean.out_features
 
 with torch.no_grad():
@@ -326,8 +328,8 @@ plt.show()
 # plt.show()
 
 
-# from scipy.stats import pearsonr
-# from sklearn.preprocessing import StandardScaler
+from scipy.stats import pearsonr
+from sklearn.preprocessing import StandardScaler
 
 # outputs = [generated_samples_modality1_1.numpy(), decoded_samples_modality1_2.numpy(), decoded_samples_modality1_3.numpy(), 
 #            generated_samples_modality2_2.numpy(), decoded_samples_modality2_1.numpy(), decoded_samples_modality2_3.numpy(), 
@@ -336,34 +338,34 @@ plt.show()
 
 
 # Réduction de dimension avec t-SNE
-# tsne = TSNE(n_components=2, perplexity=8)
+tsne = TSNE(n_components=2, perplexity=8)
 
-# # Normaliser les données
-# scaled_outputs = [StandardScaler().fit_transform(data) for data in outputs]
+# Normaliser les données
+scaled_outputs = [StandardScaler().fit_transform(data) for data in outputs]
 
-# # Calculer les matrices de similarité entre les paires de modalités
-# similarity_matrices = []
+# Calculer les matrices de similarité entre les paires de modalités
+similarity_matrices = []
 
-# for i in range(3):
-#     start_index = i * 3
-#     end_index = start_index + 3
-#     similarity_matrix = np.zeros((3, 3))
+for i in range(3):
+    start_index = i * 3
+    end_index = start_index + 3
+    similarity_matrix = np.zeros((3, 3))
     
-#     for j in range(3):
-#         modalite_start = j * 3
-#         modalite_end = modalite_start + 1
-#         group_data = scaled_outputs[start_index:end_index][modalite_start:modalite_end]
+    for j in range(3):
+        modalite_start = j * 3
+        modalite_end = modalite_start + 1
+        group_data = scaled_outputs[start_index:end_index][modalite_start:modalite_end]
         
-#         if group_data:
-#             print(f"Shape of group_data before t-SNE: {np.vstack(group_data).shape}")
-#             reduced_data = tsne.fit_transform(np.vstack(group_data))
-#             print(f"Shape of reduced_data: {reduced_data.shape}")
-#             similarity, _ = pearsonr(reduced_data[:, 0], reduced_data[:, 1])
-#             similarity_matrix[i, j] = similarity
+        if group_data:
+            print(f"Shape of group_data before t-SNE: {np.vstack(group_data).shape}")
+            reduced_data = tsne.fit_transform(np.vstack(group_data))
+            print(f"Shape of reduced_data: {reduced_data.shape}")
+            similarity, _ = pearsonr(reduced_data[:, 0], reduced_data[:, 1])
+            similarity_matrix[i, j] = similarity
 
-#     similarity_matrices.append(similarity_matrix)
+    similarity_matrices.append(similarity_matrix)
 
-# # Afficher les matrices de similarité
-# for i, modality in enumerate(modalities):
-#     print(f"\nSimilarité entre les paires de modalités pour {modality}:")
-#     print(similarity_matrices[i])
+# Afficher les matrices de similarité
+for i, modality in enumerate(modalities):
+    print(f"\nSimilarité entre les paires de modalités pour {modality}:")
+    print(similarity_matrices[i])

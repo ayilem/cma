@@ -21,6 +21,7 @@ class Trainer:
         self.optimizers = dict()      
         self.loss_fn = dict()
         self.log = Log()
+        self.device = torch.device('cpu')
 
     def train_clustering_module(self, multi_modal_data:list):
         # Outputs
@@ -81,8 +82,9 @@ class Trainer:
         # Compute the loss
         
         loss_d_train = list()
+        
         for i in range(len(output_d)):
-            loss_d_train.append(self.loss_fn['clf'](output_d[i], modal_target(i, output_d[i].size(0)).to(self.model.config['device'])))
+            loss_d_train.append(self.loss_fn['clf'](output_d[i], modal_target(i, output_d[i].size(0)).to(self.device)))
         _loss_d_train = self.model.config['gamma'] * torch.stack(loss_d_train).sum()
 
 
@@ -100,12 +102,12 @@ class Trainer:
         }
         for i in range(len(multi_modal_data)):
             stats['loss_d_train_modal'].append(loss_d_train[i].item())
-            stats['acc_d_real_modal'].append(accuracy(output_d[i], modal_target(i, multi_modal_data[i][0].size(0)).to(self.model.config['device'])))
+            stats['acc_d_real_modal'].append(accuracy(output_d[i], modal_target(i, multi_modal_data[i][0].size(0)).to(self.device)))
 
             acc = 0
             for i2 in range(len(multi_modal_data)):
                 if i == i2: continue
-                target = modal_target(i2, multi_modal_data[i2][0].size(0)).to(self.model.config['device'])
+                target = modal_target(i2, multi_modal_data[i2][0].size(0)).to(self.device)
                 acc += accuracy(output_d[i], target)
             stats['acc_d_fake_modal'].append(acc / (len(multi_modal_data) - 1))
 
@@ -139,7 +141,7 @@ class Trainer:
 
         targets = list()
         for i in range(len(output_d)):
-            targets.append(modal_target(i, output_d[i].size(0)).to(self.model.config['device']))
+            targets.append(modal_target(i, output_d[i].size(0)).to(self.device))
         loss_d = list()
         for i in range(len(output_d)):
             l = 0
@@ -229,7 +231,7 @@ class Trainer:
         for epoch in range(start_epoch, start_epoch + self.model.config['epochs']):
             self.log.log_batch({'epoch': epoch}) 
             for multi_modal_data in zip(*dataloaders):
-                multi_modal_data = [(X.to(self.model.config['device']), y.to(self.model.config['device'])) for (X, y) in multi_modal_data]
+                multi_modal_data = [(X.to(self.device), y.to(self.device)) for (X, y) in multi_modal_data]
                 #print(epoch, multi_modal_data[0][0].shape, multi_modal_data[1][0].shape, multi_modal_data[2][0].shape)
 
                 # Train clustering module
