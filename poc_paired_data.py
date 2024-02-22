@@ -18,8 +18,10 @@ vae_model_modality1.load_state_dict(checkpoint_modality1)
 vae_model_modality2.load_state_dict(checkpoint_modality2)
 vae_model_modality3.load_state_dict(checkpoint_modality3)
 
+vae = [vae_model_modality1, vae_model_modality2, vae_model_modality3]
+
 # Load VAE via "Model" class to use "forward_vae" function
-model= Model(config, vae = [vae_model_modality1, vae_model_modality2, vae_model_modality3])
+model= Model(config, vae)
 
 # Load Data
 datasets = list()
@@ -185,3 +187,11 @@ loss1_from_1 = criterion(datasets[0][0][:200], generated_samples_modality1_from_
 print("loss 1 from 1 : ", loss1_from_1.detach().numpy())
 print('--------------------')
 
+
+#### LOOP ON THE DATA ####
+
+def loop_on_two_modalities(int1, int2):
+    # First step : generate output modality int2 from input modality int1
+    latent_modality = pred[int1][:200]
+    decoded_samples_modality3_from_1 = vae[int2-1].decoder(latent_modality)
+    return "ok"
