@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 
 from src.config import config as default_config
 from src.dataset import generate_datasets
-from src.models import CMA
+from src.models_emma import CMA
 from src.losses import ClusteringLoss
 from src.functions import Log, modal_target, accuracy, remap_confusion_matrix
 
@@ -18,8 +18,9 @@ script_dir = os.path.dirname(__file__)
 
 def save_vae_checkpoints(model, epoch, checkpoint_dir):
     for i, vae in enumerate(model.vae):
-        checkpoint_path = os.path.join(checkpoint_dir, f'vae_{i}_epoch_{epoch}.pth')
+        checkpoint_path = os.path.join(checkpoint_dir, f'vae_{i}_epoch_{epoch}_paired.pth')
         torch.save(vae.state_dict(), checkpoint_path)
+        
 ####### END MODIF ########
 
 
@@ -89,7 +90,7 @@ class Trainer:
         ####### MODIF FOR PROJECT ########
          # Save VAE checkpoints
         if self.model.config['epochs'] % self.model.config['saving_freq'] == 0:
-            save_vae_checkpoints(self.model, self.model.config['epochs'], self.checkpoint_dir)
+            save_vae_checkpoints(self.model, self.model.config['epochs'], 'C:/Users/emend/3A_new/3A_new/Projet 3A/repo_final/cma/checkpoint_vae_paired/')
         ####### END MODIF ########
 
 
@@ -314,6 +315,63 @@ class Trainer:
             print(display_log)
 
 
+class CycledVAE(torch.nn.Module):
+    def __init__(self, modela, modelb):
+        super(CycledVAE, self).__init__()
+        self.modela = modela
+        self.modelb = modelb
+        self.optimizera = torch.optim.Adam([{'params': net.parameters()} for net in modela.vae], lr=self.modela.config['lr']) # Define optimizers for each model
+        self.optimizerb = torch.optim.Adam([{'params': net.parameters()} for net in modelb.vae], lr=self.modelb.config['lr'])
+
+    def forward(self, x):
+        # Encode modalité 1 avec model1
+        latent_1 = self.modela.forward_vae(x, encoder_only=True)[0]
+        # Decode avec le décodeur de model2
+        output_1 = torch.Tensor(self.modelb.vae[0].decoder(latent_1))
+        # Encode modalité 2 avec model2
+        latent_2 = self.modelb.forward_vae(output_1, encoder_only=True)[0]
+        # Decode avec le décodeur de model1
+        output_2 = torch.Tensor(self.modela.vae[0].decoder(latent_2))
+        return latent_1, output_1, latent_2, output_2
+    
+class CoupledVAE(torch.nn.Module):
+    def __init__(self, model1, model2, model3, model1_2, model2_1):
+        super(CoupledVAE, self).__init__()
+        self.model1 = model1
+        self.model2 = model2
+        self.model3 = model3
+        self.model1_2 = model1_2
+        self.model2_1 = model2_1
+
+        self.optimizer1 = torch.optim.Adam([{'params': net.parameters()} for net in model1.vae], lr=self.model1.config['lr']) # Define optimizers for each model
+        self.optimizer2 = torch.optim.Adam([{'params': net.parameters()} for net in model2.vae], lr=self.model2.config['lr'])
+        self.optimizer3 = torch.optim.Adam([{'params': net.parameters()} for net in model3.vae], lr=self.model3.config['lr'])
+        self.optimizer1_2 = torch.optim.Adam([{'params': net.parameters()} for net in model1_2.vae], lr=self.model1_2.config['lr'])
+        self.optimizer2_1 = torch.optim.Adam([{'params': net.parameters()} for net in model2_1.vae], lr=self.model2_1.config['lr'])
+
+    # def forward_all_models(self, x1, x2, x3):
+    def forward(self, x1, x2):
+        output1 = torch.Tensor(self.model1.forward_vae(x1)[1][0])
+        output2 = torch.Tensor(self.model2.forward_vae(x2)[1][0])
+        output1_2 = torch.Tensor(self.model1_2.forward_vae(x2)[1][0])
+        output2_1 = torch.Tensor(self.model2_1.forward_vae(x1)[1][0])
+        # output2 = self.model2.forward(x2)
+        # output3 = self.model3.forward(x3)
+        return output1,output2, output1_2, output2_1
+        # return output1, output2, output3, output1_2, output1_3, output2_1, output2_3, output3_1, output3_2
+
+    # def forward(self, x1, x2, x3):
+    #         # Encode modalité 1 avec model1
+    #         latent_1 = self.modela.forward_vae(x, encoder_only=True)[0]
+    #         # Decode avec le décodeur de model2
+    #         output_1 = torch.Tensor(self.modelb.vae[0].decoder(latent_1))
+    #         # Encode modalité 2 avec model2
+    #         latent_2 = self.modelb.forward_vae(output_1, encoder_only=True)[0]
+    #         # Decode avec le décodeur de model1
+    #         output_2 = torch.Tensor(self.modela.vae[0].decoder(latent_2))
+    #         return latent_1, output_1, latent_2, output_2
+
+
 def parse_arguments():
     parser = argparse.ArgumentParser(description='PyTorch autoencoder training')
     parser.add_argument('--mode', choices=['standard', 'conditional', 'clustering'], required=False, help='Training mode')
@@ -326,6 +384,7 @@ def parse_arguments():
     parser.add_argument('--lambda', action="store", type=float, help='kl hyperparameter')
     parser.add_argument('--xi', action="store", type=float, help='clustering hyperparameter')
     parser.add_argument('--latent-dims', default=10, type=int, help='number of latent dimentions for the VAEs')
+    # parser.add_argument('--latent-dims', default=20, type=int, help='number of latent dimentions for the VAEs')
     parser.add_argument('--checkpoint-prefix', action='store', help='prefix name for checkpoint file')
     #parser.add_argument('--resume', '-r', action='store_true', help='resume from checkpoint')
     parser.add_argument('--saving-freq', type=int, help='Save intermediate states of training every this many epochs')
@@ -361,7 +420,7 @@ if __name__ == '__main__':
         default_config['saving_freq'] = default_config['epochs'] # only save last epoch
 
     # Load datasets
-    datasets = generate_datasets(suffix='5_diff', type='unpaired', train=True)
+    datasets = generate_datasets(suffix='5_diff', type='paired', train=True)
     expr_train_dataset, methyl_train_dataset, protein_train_dataset = datasets
 
     classes = {len(ds.classes) for ds in datasets}
@@ -371,8 +430,9 @@ if __name__ == '__main__':
     cma = CMA(default_config)
 
     ####### MODIF FOR PROJECT ########
-    checkpoint_dir = 'C:/Users/emend/3A_new/3A_new/Projet 3A/cma/checkpoint'
+    checkpoint_dir = 'C:/Users/emend/3A_new/3A_new/Projet 3A/repo_final/cma/checkpoint'
     trainer = Trainer(cma.model, checkpoint_dir)
+
     ####### END MODIF ########
 
     train(
@@ -391,6 +451,6 @@ if __name__ == '__main__':
         cma.get_clustering_module_accuracy(dataloaders)
 
         print(f'\n\nTest data')
-        test_datasets = generate_datasets(suffix='5_diff', type='unpaired', train=False, test=True)
+        test_datasets = generate_datasets(suffix='5_diff', type='paired', train=False, test=True)
         test_dataloaders = [DataLoader(ds, batch_size=default_config['batch_size'], drop_last=False, shuffle=False) for ds in test_datasets]
         cma.get_clustering_module_accuracy(test_dataloaders)

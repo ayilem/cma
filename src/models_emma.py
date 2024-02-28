@@ -62,7 +62,7 @@ class Decoder(nn.Module):
 class VAE(nn.Module):
     
     # def __init__(self, n_input=131, n_hidden=5000, latent_dims=20):
-    def __init__(self, n_input=131, n_hidden=5000, latent_dims=10):
+    def __init__(self, n_input=131, n_hidden=5000, latent_dims=10, other_m=0):
         super().__init__()
         self.n_input = n_input
         self.n_hidden= n_hidden
@@ -70,10 +70,15 @@ class VAE(nn.Module):
         self.encoder = Encoder(n_input, latent_dims, n_hidden)
         self.decoder = Decoder(n_input, latent_dims, n_hidden)
         
-
     def forward(self, x):
         z = self.encoder(x)
-        return self.decoder(z)
+        if self.other_m == 0 : 
+            print("same modality, ok")
+            return self.decoder(z)
+        else : 
+            output =  self.other_m.decoder(z)
+            print("not same modality")
+            return output
 
 # ---
 
@@ -158,7 +163,6 @@ class Model:
         self.cond = None
         self.projector = None
         self.cluster = None
-        
 
     def set_model(self, n_classes=None):
         for settings in self.config['vae']:
@@ -203,7 +207,12 @@ class Model:
         output_latents = list()
         output_recon = list()
         for i, net in enumerate(self.vae):
-            X, y = multi_modal_data[i]
+            if len(multi_modal_data[i])==2 :
+                # print('two columns', len(multi_modal_data[i]))
+                X, y = multi_modal_data[i]
+            else:
+                # print('more than two columns ', len(multi_modal_data))
+                X = multi_modal_data
             output_latents.append(net.encoder(X))
             if not encoder_only:
                 output_recon.append(net.decoder(output_latents[-1]))

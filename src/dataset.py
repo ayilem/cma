@@ -27,6 +27,7 @@ class IntersimDataset(Dataset):
             
         return x, y
 
+from sklearn.preprocessing import StandardScaler
 
 def get_paired_data(suffix):
     expr_X = pd.read_csv(root_dir + '/paired/expression_' + suffix + '.txt', sep='\t')
@@ -34,6 +35,18 @@ def get_paired_data(suffix):
     protein_X = pd.read_csv(root_dir + '/paired/protein_' + suffix + '.txt', sep='\t')
 
     y_common = pd.read_csv(root_dir + '/paired/clusters_' + suffix + '.txt', sep='\t', index_col=0)
+
+     # Créez un objet StandardScaler
+    scaler = StandardScaler()
+
+    scaler.fit(expr_X)
+    expr_X = pd.DataFrame(scaler.transform(expr_X), columns=expr_X.columns)
+    scaler.fit(methyl_X)
+    methyl_X = pd.DataFrame(scaler.transform(methyl_X), columns=methyl_X.columns)
+    scaler.fit(protein_X)
+    protein_X = pd.DataFrame(scaler.transform(protein_X), columns=protein_X.columns)
+    scaler.fit(y_common)
+    y_common = pd.DataFrame(scaler.transform(y_common), columns=y_common.columns)
 
     expr = IntersimDataset(expr_X, y_common)[:]
     methyl = IntersimDataset(methyl_X, y_common)[:]
