@@ -66,6 +66,24 @@ def get_unpaired_data(suffix):
     protein_X = pd.read_csv(root_dir + '/unpaired/protein_unpaired_' + suffix + '.txt', sep='\t')
     protein_y = pd.read_csv(root_dir + '/unpaired/clusters_protein_unpaired_' + suffix + '.txt', sep='\t', index_col=0)
 
+    
+     # Créez un objet StandardScaler
+    scaler = StandardScaler()
+
+    scaler.fit(expr_X)
+    expr_X = pd.DataFrame(scaler.transform(expr_X), columns=expr_X.columns)
+    scaler.fit(methyl_X)
+    methyl_X = pd.DataFrame(scaler.transform(methyl_X), columns=methyl_X.columns)
+    scaler.fit(protein_X)
+    protein_X = pd.DataFrame(scaler.transform(protein_X), columns=protein_X.columns)
+
+    scaler.fit(expr_y)
+    expr_y = pd.DataFrame(scaler.transform(expr_y), columns=expr_y.columns)
+    scaler.fit(methyl_y)
+    methyl_y = pd.DataFrame(scaler.transform(methyl_y), columns=methyl_y.columns)
+    scaler.fit(protein_y)
+    protein_y = pd.DataFrame(scaler.transform(protein_y), columns=protein_y.columns)
+
     return (expr_X, expr_y), (methyl_X, methyl_y), (protein_X, protein_y)
 
 
