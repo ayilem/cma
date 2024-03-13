@@ -1,6 +1,7 @@
 import argparse
 import os
 import torch
+import torch.nn as nn
 from torch.utils.data import DataLoader
 from models_mel import MultimodalVAE
 from src.dataset import generate_datasets
@@ -16,26 +17,16 @@ script_dir = os.path.dirname(__file__)
 
 #-------------------------------------------------
 
-from torch.utils.data import DataLoader
-from src.dataset import generate_datasets
-import torch.nn as nn
-import torch
-from src.config import config
-from torchvision import transforms
-
 
 
 train_datasets = generate_datasets(suffix='5_diff', type='paired', train=True, test=False)
-
 test_datasets = generate_datasets(suffix='5_diff', type='paired', train=False, test=True)
-
 
 
 train_loaders = [DataLoader(dataset, batch_size=32, shuffle=True) for dataset in train_datasets]
 test_loaders = [DataLoader(dataset, batch_size=32, shuffle=False) for dataset in test_datasets]
 
 
-print(train_loaders)
 n_inputs1 = train_datasets[0][0][0].shape[0]  # La taille du vecteur de caractéristiques pour la modalité 1
 n_inputs2 = train_datasets[1][0][0].shape[0]  # La taille du vecteur de caractéristiques pour la modalité 2
 n_outputs = train_datasets[2][0][0].shape[0]  # La taille du vecteur de caractéristiques pour la modalité 3
@@ -92,93 +83,14 @@ with torch.no_grad():
 
 
 
-
-
-
-
-
 #---------------CROSS VALDIATION-------------------
 
 from torch.utils.data import Subset
 import torch
 from sklearn.model_selection import KFold
 
-# # Définir le nombre de plis
-# n_splits = 5
-# kf = KFold(n_splits=n_splits)
-
-# # Initialiser une liste pour stocker les pertes moyennes de chaque pli
-# all_fold_losses = []
-
-# # Générer les ensembles de données
-# datasets = generate_datasets(suffix='5_diff', type='paired', train=True, test=False)
-
-# # Convertir les ensembles de données en listes pour faciliter l'indexation
-# datasets = [list(dataset) for dataset in datasets]
-
-# # Initialiser une liste pour stocker les pertes de chaque itération d'entraînement
-# losses = []
-
-# for fold, (train_index, test_index) in enumerate(kf.split(datasets[0])):
-#     print(f'Fold {fold+1}')
-
-#     # Créer les ensembles de données d'entraînement et de test pour chaque pli
-#     train_datasets = [Subset(dataset, train_index) for dataset in datasets]
-#     test_datasets = [Subset(dataset, test_index) for dataset in datasets]
-
-#     # Créer les chargeurs de données
-#     train_loaders = [DataLoader(dataset, batch_size=32, shuffle=True) for dataset in train_datasets]
-#     test_loaders = [DataLoader(dataset, batch_size=32, shuffle=False) for dataset in test_datasets]
-
-#     # Initialiser le modèle et l'optimiseur
-#     model = MultimodalVAE(n_inputs1=n_inputs1, n_inputs2=n_inputs2, latent_dims=latent_dims, n_hiddens=n_hiddens, n_outputs=n_outputs)
-#     optimizer = torch.optim.Adam(model.parameters())
-#     critere = torch.nn.MSELoss()
-
-#     # Entraîner le modèle
-#     num_epochs = 10
-#     for epoch in range(num_epochs):
-#         model.train()
-#         loss_sum = 0.0
-#         num_batches = 0
-#         for (x1, _), (x2, _), (y, _) in zip(*train_loaders):
-#             if x1.size(0) != 32 or x2.size(0) != 32 or y.size(0) != 32:
-#                 continue
-#             outputs = model(x1, x2)
-#             loss = critere(outputs, y)
-#             optimizer.zero_grad()
-#             loss.backward()
-#             optimizer.step()
-            
-#             # Ajouter la perte de cette itération à la liste des pertes
-#             losses.append(loss.item())
-            
-#             loss_sum += loss.item()
-#             num_batches += 1
-
-#         avg_loss = loss_sum / num_batches  
-#         print(f'Epoch {epoch+1}, Train Average Loss: {avg_loss}')
-    
-#     # Calculer la perte moyenne pour ce pli
-#     fold_avg_loss = sum(losses) / len(losses)
-#     print(f'Fold {fold+1}, Average Loss: {fold_avg_loss}')
-    
-#     # Ajouter la perte moyenne de ce pli à la liste globale des pertes
-#     all_fold_losses.append(fold_avg_loss)
 
 
-# print("All Fold Losses:")
-# for fold, fold_losses in enumerate(all_fold_losses):
-#     print(f'Fold {fold+1}:')
-#     for epoch, loss in enumerate(fold_losses):
-#         print(f'Epoch {epoch+1}, Average Loss: {loss}')
-
-
-
-
-
-
-# Définir le nombre de plis
 n_splits = 10
 kf = KFold(n_splits=n_splits)
 
