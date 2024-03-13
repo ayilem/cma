@@ -3,83 +3,83 @@ import torch
 import torch.nn as nn 
 
 
-class Encoder(nn.Module):
+# class Encoder(nn.Module):
     
-    def __init__(self, n_input, latent_dims, n_hidden):
-        super().__init__()
-        self.encoder = nn.Sequential(
-            nn.Linear(n_input, n_hidden),
-            nn.ReLU(inplace=True),
+#     def __init__(self, n_input, latent_dims, n_hidden):
+#         super().__init__()
+#         self.encoder = nn.Sequential(
+#             nn.Linear(n_input, n_hidden),
+#             nn.ReLU(inplace=True),
             
-            nn.Linear(n_hidden, n_hidden),
-            nn.ReLU(inplace=True),
+#             nn.Linear(n_hidden, n_hidden),
+#             nn.ReLU(inplace=True),
             
-            nn.Linear(n_hidden, n_hidden),
-        )
+#             nn.Linear(n_hidden, n_hidden),
+#         )
 
-        self.z_mean = nn.Linear(n_hidden, latent_dims)
-        self.z_log_var = nn.Linear(n_hidden, latent_dims)
+#         self.z_mean = nn.Linear(n_hidden, latent_dims)
+#         self.z_log_var = nn.Linear(n_hidden, latent_dims)
 
-        self.kl = 0
+#         self.kl = 0
 
-    def forward(self, x):       
-        out = self.encoder(x)
-        mu = self.z_mean(out)
-        logvar = self.z_log_var(out)
+#     def forward(self, x):       
+#         out = self.encoder(x)
+#         mu = self.z_mean(out)
+#         logvar = self.z_log_var(out)
         
-        self.kl = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+#         self.kl = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
 
-        # Reparametrization        
-        std = torch.exp(0.5 * logvar)            
-        eps = torch.randn_like(std)
-        z = mu + eps * std
+#         # Reparametrization        
+#         # std = torch.exp(0.5 * logvar)            
+#         # eps = torch.randn_like(std)
+#         # z = mu + eps * std
     
-        return z
-    
-
-class Decoder(nn.Module):
-    
-    def __init__(self, n_input, latent_dims, n_hidden):
-        super().__init__()
-        self.decoder = nn.Sequential(
-            nn.Linear(latent_dims, n_hidden),
-            #nn.BatchNorm1d(n_hidden),
-            nn.ReLU(inplace=True),
-            
-            nn.Linear(n_hidden, n_hidden),
-            #nn.BatchNorm1d(n_hidden),
-            nn.ReLU(inplace=True),
-            
-            nn.Linear(n_hidden, n_input),
-        )
-
-    def forward(self, z):
-        return self.decoder(z)
+#         return z
     
 
-class Discriminator(nn.Module):
+# class Decoder(nn.Module):
     
-    def __init__(self, nz=128, n_hidden=1024, n_out=1):
-        super().__init__()
-        self.nz = nz
-        self.n_hidden = n_hidden
-        self.n_out = n_out
+#     def __init__(self, n_input, latent_dims, n_hidden):
+#         super().__init__()
+#         self.decoder = nn.Sequential(
+#             nn.Linear(latent_dims, n_hidden),
+#             #nn.BatchNorm1d(n_hidden),
+#             nn.ReLU(inplace=True),
+            
+#             nn.Linear(n_hidden, n_hidden),
+#             #nn.BatchNorm1d(n_hidden),
+#             nn.ReLU(inplace=True),
+            
+#             nn.Linear(n_hidden, n_input),
+#         )
 
-        self.net = nn.Sequential(
-            nn.Linear(nz, n_hidden),
-            nn.ReLU(),
-            
-            nn.Linear(n_hidden, n_hidden),
-            nn.ReLU(),
-            
-            nn.Linear(n_hidden, n_hidden),
-            nn.ReLU(),
-            
-            nn.Linear(n_hidden, n_out)
-        )
+#     def forward(self, z):
+#         return self.decoder(z)
+    
 
-    def forward(self, x):
-        return self.net(x)
+# class Discriminator(nn.Module):
+    
+#     def __init__(self, nz=128, n_hidden=1024, n_out=1):
+#         super().__init__()
+#         self.nz = nz
+#         self.n_hidden = n_hidden
+#         self.n_out = n_out
+
+#         self.net = nn.Sequential(
+#             nn.Linear(nz, n_hidden),
+#             nn.ReLU(),
+            
+#             nn.Linear(n_hidden, n_hidden),
+#             nn.ReLU(),
+            
+#             nn.Linear(n_hidden, n_hidden),
+#             nn.ReLU(),
+            
+#             nn.Linear(n_hidden, n_out)
+#         )
+
+#     def forward(self, x):
+#         return self.net(x)
     
 
 #-------------------------------------------------------------------------
