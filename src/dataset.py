@@ -84,3 +84,4 @@ def generate_datasets(suffix='5_diff', type='unpaired', train=True, test=False):
         datasets.extend([exp_test_dataset, methyl_test_dataset, protein_test_dataset])
     
     return datasets
+
