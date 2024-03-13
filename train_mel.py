@@ -3,7 +3,7 @@ import os
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from models_mel import MultimodalVAE
+from models_mel import MultimodalAE
 from src.dataset import generate_datasets
 from src.functions import Log
 from src.config import config as default_config
@@ -35,7 +35,7 @@ print(n_inputs1, n_inputs2, n_outputs)
 latent_dims = 20   
 n_hiddens = 256 
 
-model = MultimodalVAE(n_inputs1=n_inputs1, n_inputs2=n_inputs2, latent_dims=latent_dims, n_hiddens=n_hiddens, n_outputs=n_outputs)
+model = MultimodalAE(n_inputs1=n_inputs1, n_inputs2=n_inputs2, latent_dims=latent_dims, n_hiddens=n_hiddens, n_outputs=n_outputs)
 
 critere = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters())
@@ -116,7 +116,7 @@ for fold, (train_index, test_index) in enumerate(kf.split(datasets[0])):
     test_loaders = [DataLoader(dataset, batch_size=32, shuffle=False) for dataset in test_datasets]
 
 
-    model = MultimodalVAE(n_inputs1=n_inputs1, n_inputs2=n_inputs2, latent_dims=latent_dims, n_hiddens=n_hiddens, n_outputs=n_outputs)
+    model = MultimodalAE(n_inputs1=n_inputs1, n_inputs2=n_inputs2, latent_dims=latent_dims, n_hiddens=n_hiddens, n_outputs=n_outputs)
     optimizer = torch.optim.Adam(model.parameters())
 
    
