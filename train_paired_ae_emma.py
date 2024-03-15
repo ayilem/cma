@@ -72,49 +72,75 @@ optimizer3 = torch.optim.Adam(model3.parameters(), lr=lr)
 optimizer1_3 = torch.optim.Adam(model1_3.parameters(), lr=lr)
 optimizer3_1 = torch.optim.Adam(model3_1.parameters(), lr=lr)
 
-# Entraînement du modèle
+
+
 num_epochs = 100
+
+# Consolidate models and optimizers
+models = [model1_3, model3_1]
+optimizers = [optimizer1_3, optimizer3_1]
+
+# Learning rate scheduler
+scheduler = torch.optim.lr_scheduler.StepLR(optimizers, step_size=20, gamma=0.5)
+
+# Training loop
 for epoch in range(num_epochs):
-    model1.train()
-    model3.train()
-    model1_3.train()
-    model3_1.train()
-    for (x1, _), (x2, _), (x3, y) in zip(*train_loaders):
+    for model, optimizer in zip(models, optimizers):
+        model.train()
+        for (x1, _), (x2, _), (x3, y) in zip(*train_loaders):
+            if x1.size(0) != 32 or x3.size(0) != 32 or y.size(0) != 32:
+                continue
+            optimizer.zero_grad()
+            o1_3, o3_1 = model(x1), model(x3)
+            loss = critere(o1_3, x3) + critere(o3_1, x1)
+            loss.backward()
+            optimizer.step()
+        scheduler.step()
 
-        if x1.size(0) != 32 or x3.size(0) != 32 or y.size(0) != 32:
-            continue
 
-       # Forward pass
-        o1, o3, o1_3, o3_1 = model1(x1), model3(x3), model1_3(x1), model3_1(x3)
-        loss = 0*critere(o1, x1) + 0*critere(o3, x3) + critere(o1_3, x3) + critere(o3_1, x1)
-        # loss = critere(o1, x1) + critere(o3, x3) + critere(o1_3, x3) + critere(o3_1, x1)
-        # Backward and optimize
-        # optimizer1.zero_grad()
-        # optimizer3.zero_grad()
-        optimizer1_3.zero_grad()
-        optimizer3_1.zero_grad()
+# # Entraînement du modèle
+# num_epochs = 100
+# for epoch in range(num_epochs):
+#     model1.train()
+#     model3.train()
+#     model1_3.train()
+#     model3_1.train()
+#     for (x1, _), (x2, _), (x3, y) in zip(*train_loaders):
 
-        loss.backward()
+#         if x1.size(0) != 32 or x3.size(0) != 32 or y.size(0) != 32:
+#             continue
 
-        optimizer1_3.step()
-        optimizer3_1.step()
-        # optimizer1.step()
-        # optimizer3.step()
+#        # Forward pass
+#         o1, o3, o1_3, o3_1 = model1(x1), model3(x3), model1_3(x1), model3_1(x3)
+#         loss = 0*critere(o1, x1) + 0*critere(o3, x3) + critere(o1_3, x3) + critere(o3_1, x1)
+#         # loss = critere(o1, x1) + critere(o3, x3) + critere(o1_3, x3) + critere(o3_1, x1)
+#         # Backward and optimize
+#         # optimizer1.zero_grad()
+#         # optimizer3.zero_grad()
+#         optimizer1_3.zero_grad()
+#         optimizer3_1.zero_grad()
 
-    print(f' Epoch {epoch} -> loss totale :', loss.item(), " loss1 :", critere(o1, x1).item(), " loss3 :", critere(o3, x3).item(), " loss1_3 :", critere(o1_3, x3).item(), " loss3_1 :", critere(o3_1, x1).item())
+#         loss.backward()
 
-# model1.eval()
-# model3.eval()
-model1_3.eval()
-model3_1.eval()
-with torch.no_grad():
-    total_loss = 0
-    for (x1, _), (x2, _), (x3, y) in zip(*test_loaders):
-        o1, o3, o1_3, o3_1 = model1(x1), model3(x3), model1_3(x1), model3_1(x3)
-        loss = critere(o1, x1) + critere(o3, x3) + critere(o1_3, x3) + critere(o3_1, x1)
-        total_loss += loss.item()
-    print(f'Test Loss: {total_loss / len(test_loaders[0])}')
-    print(" loss1 :", critere(o1, x1).item(), " loss3 :", critere(o3, x3).item(), " loss1_3 :", critere(o1_3, x3).item(), " loss3_1 :", critere(o3_1, x1).item())
+#         optimizer1_3.step()
+#         optimizer3_1.step()
+#         # optimizer1.step()
+#         # optimizer3.step()
+
+#     print(f' Epoch {epoch} -> loss totale :', loss.item(), " loss1 :", critere(o1, x1).item(), " loss3 :", critere(o3, x3).item(), " loss1_3 :", critere(o1_3, x3).item(), " loss3_1 :", critere(o3_1, x1).item())
+
+# # model1.eval()
+# # model3.eval()
+# model1_3.eval()
+# model3_1.eval()
+# with torch.no_grad():
+#     total_loss = 0
+#     for (x1, _), (x2, _), (x3, y) in zip(*test_loaders):
+#         o1, o3, o1_3, o3_1 = model1(x1), model3(x3), model1_3(x1), model3_1(x3)
+#         loss = critere(o1, x1) + critere(o3, x3) + critere(o1_3, x3) + critere(o3_1, x1)
+#         total_loss += loss.item()
+#     print(f'Test Loss: {total_loss / len(test_loaders[0])}')
+#     print(" loss1 :", critere(o1, x1).item(), " loss3 :", critere(o3, x3).item(), " loss1_3 :", critere(o1_3, x3).item(), " loss3_1 :", critere(o3_1, x1).item())
 
 
 
