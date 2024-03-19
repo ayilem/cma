@@ -41,6 +41,24 @@ def get_unpaired_data(suffix):
     return (expr_X, expr_y), (methyl_X, methyl_y), (protein_X, protein_y)
 
 
+def concat_datasets(root_dir = root_dir, suffix = 'diff', type='paired'):
+    # Noms des colonnes
+
+    data_types = ['clusters', 'expression', 'methylation', 'protein']
+    
+    for data_type in data_types:
+        column_names_written = False
+        with open(root_dir + f'/paired/{data_type}_all_{suffix}.txt', 'w') as f_out:
+            for i in [5, 10, 15]:
+                with open(root_dir + f'/paired/{data_type}_{i}_{suffix}.txt') as f_in:
+                    if not column_names_written:
+                        f_out.write(f_in.readline())  # Écriture des noms de colonnes une seule fois
+                        column_names_written = True
+                    else:
+                        f_in.readline()  # Passer les noms de colonnes dans les itérations suivantes
+                    f_out.write(f_in.read())  # Écriture des données
+    
+    return "Concatenated paired datasets : Done"
 
 
 from sklearn.preprocessing import StandardScaler
@@ -90,3 +108,5 @@ def generate_datasets(suffix='5_diff', type='unpaired', train=True, test=False):
         datasets.extend([exp_test_dataset, methyl_test_dataset, protein_test_dataset])
     
     return datasets
+
+
